@@ -6,7 +6,7 @@ from self_supervised_model import *
 import torch
 
 def load_data_n_model(dataset_name, model_name, root):
-    classes = {'UT_HAR_data':7,'NTU-Fi-HumanID':14,'NTU-Fi_HAR':6,'Widar':22,'Ly-Gesture-20240327':5}
+    classes = {'UT_HAR_data':7,'NTU-Fi-HumanID':14,'NTU-Fi_HAR':6,'Widar':22,'Ly-Gesture-20240327':6}
     if dataset_name == 'UT_HAR_data':
         print('using dataset: UT-HAR DATA')
         data = UT_HAR_dataset(root)
@@ -75,15 +75,15 @@ def load_data_n_model(dataset_name, model_name, root):
             train_epoch = 50 #20
         elif model_name == 'ResNet18':
             print("using model: ResNet18")
-            model = NTU_Fi_ResNet18(num_classes)
+            model = Ly_Warp_ResNet18(num_classes)
             train_epoch = 50 #30
         elif model_name == 'ResNet50':
             print("using model: ResNet50")
-            model = NTU_Fi_ResNet50(num_classes)
+            model = Ly_Warp_ResNet50(num_classes)
             train_epoch = 50 #40
         elif model_name == 'ResNet101':
             print("using model: ResNet101")
-            model = NTU_Fi_ResNet101(num_classes)
+            model = Ly_Warp_ResNet101(num_classes)
             train_epoch = 50
         elif model_name == 'RNN':
             print("using model: RNN")
