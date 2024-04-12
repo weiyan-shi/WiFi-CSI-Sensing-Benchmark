@@ -60,13 +60,17 @@ def test(model, tensor_loader, criterion, device):
 
     
 def main():
-    root = './Data/' 
+    root = '.\\data\\' 
     parser = argparse.ArgumentParser('WiFi Imaging Benchmark')
-    parser.add_argument('--dataset', choices = ['UT_HAR_data','NTU-Fi-HumanID','NTU-Fi_HAR','Widar'])
+    parser.add_argument('--dataset', choices = ['UT_HAR_data','NTU-Fi-HumanID','NTU-Fi_HAR','Widar','Ly-Gesture-20240327'])
     parser.add_argument('--model', choices = ['MLP','LeNet','ResNet18','ResNet50','ResNet101','RNN','GRU','LSTM','BiLSTM', 'CNN+GRU','ViT'])
     args = parser.parse_args()
+    print(args)
 
-    train_loader, test_loader, model, train_epoch = load_data_n_model(args.dataset, args.model, root)
+    dataset = 'Ly-Gesture-20240327'
+    model = 'ResNet18'
+
+    train_loader, test_loader, model, train_epoch = load_data_n_model(dataset, model, root)
     criterion = nn.CrossEntropyLoss()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)

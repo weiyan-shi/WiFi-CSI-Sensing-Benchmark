@@ -6,7 +6,7 @@ from self_supervised_model import *
 import torch
 
 def load_data_n_model(dataset_name, model_name, root):
-    classes = {'UT_HAR_data':7,'NTU-Fi-HumanID':14,'NTU-Fi_HAR':6,'Widar':22}
+    classes = {'UT_HAR_data':7,'NTU-Fi-HumanID':14,'NTU-Fi_HAR':6,'Widar':22,'Ly-Gesture-20240327':5}
     if dataset_name == 'UT_HAR_data':
         print('using dataset: UT-HAR DATA')
         data = UT_HAR_dataset(root)
@@ -58,6 +58,57 @@ def load_data_n_model(dataset_name, model_name, root):
             print("using model: ViT")
             model = UT_HAR_ViT()
             train_epoch = 200 #100
+        return train_loader, test_loader, model, train_epoch
+    
+    elif dataset_name == 'Ly-Gesture-20240327':
+        print('using dataset: Ly-Gesture-20240327')
+        num_classes = classes['Ly-Gesture-20240327']
+        train_loader = torch.utils.data.DataLoader(dataset=Ly_CSI_Dataset(root + 'Ly-Gesture-20240327\\test_amp\\'), batch_size=64, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(dataset=Ly_CSI_Dataset(root + 'Ly-Gesture-20240327\\train_amp\\'), batch_size=64, shuffle=False)
+        if model_name == 'MLP':
+            print("using model: MLP")
+            model = NTU_Fi_MLP(num_classes)
+            train_epoch = 50 #15
+        elif model_name == 'LeNet':
+            print("using model: LeNet")
+            model = NTU_Fi_LeNet(num_classes)
+            train_epoch = 50 #20
+        elif model_name == 'ResNet18':
+            print("using model: ResNet18")
+            model = NTU_Fi_ResNet18(num_classes)
+            train_epoch = 50 #30
+        elif model_name == 'ResNet50':
+            print("using model: ResNet50")
+            model = NTU_Fi_ResNet50(num_classes)
+            train_epoch = 50 #40
+        elif model_name == 'ResNet101':
+            print("using model: ResNet101")
+            model = NTU_Fi_ResNet101(num_classes)
+            train_epoch = 50
+        elif model_name == 'RNN':
+            print("using model: RNN")
+            model = NTU_Fi_RNN(num_classes)
+            train_epoch = 75
+        elif model_name == 'GRU':
+            print("using model: GRU")
+            model = NTU_Fi_GRU(num_classes)
+            train_epoch = 50 #40
+        elif model_name == 'LSTM':
+            print("using model: LSTM")
+            model = NTU_Fi_LSTM(num_classes)
+            train_epoch = 50
+        elif model_name == 'BiLSTM':
+            print("using model: BiLSTM")
+            model = NTU_Fi_BiLSTM(num_classes)
+            train_epoch = 50
+        elif model_name == 'CNN+GRU':
+            print("using model: CNN+GRU")
+            model = NTU_Fi_CNN_GRU(num_classes)
+            train_epoch = 200 #20
+        elif model_name == 'ViT':
+            print("using model: ViT")
+            model = NTU_Fi_ViT(num_classes=num_classes)
+            train_epoch = 50
         return train_loader, test_loader, model, train_epoch
     
     
