@@ -5,43 +5,44 @@ import torch.nn.functional as F
 from einops import rearrange, reduce, repeat
 from einops.layers.torch import Rearrange, Reduce
 
-class NTU_Fi_MLP(nn.Module):
+class LY_WARP_MLP(nn.Module):
     def __init__(self, num_classes):
-        super(NTU_Fi_MLP,self).__init__()
+        super(LY_WARP_MLP,self).__init__()
         self.fc = nn.Sequential(
-            nn.Linear(3*114*500,1024),
+            nn.Linear(1*32*1500,1024),
             nn.ReLU(),
             nn.Linear(1024,128),
             nn.ReLU(),
         )
         self.classifier = nn.Linear(128,num_classes)
     def forward(self,x):
-        x = x.view(-1,3*114*500)
+        x = x.view(-1,1*32*1500)
         x = self.fc(x)
         x = self.classifier(x)
         return x
     
 
-class NTU_Fi_LeNet(nn.Module):
+class LY_WARP_LeNet(nn.Module):
     def __init__(self, num_classes):
-        super(NTU_Fi_LeNet,self).__init__()
+        super(LY_WARP_LeNet,self).__init__()
         self.encoder = nn.Sequential(
-            #input size: (3,114,500)
-            nn.Conv2d(3,32,(15,23),stride=9),
+            nn.Conv2d(1,32,(3,69),stride=(1,9)),
             nn.ReLU(True),
+            nn.MaxPool2d((1, 2)),
             nn.Conv2d(32,64,3,stride=(1,3)),
             nn.ReLU(True),
+            nn.MaxPool2d((2, 2)),
             nn.Conv2d(64,96,(7,3),stride=(1,3)),
             nn.ReLU(True),
         )
         self.fc = nn.Sequential(
-            nn.Linear(96*4*6,128),
+            nn.Linear(96*4*8,128),
             nn.ReLU(),
             nn.Linear(128,num_classes)
         )
     def forward(self,x):
         x = self.encoder(x)
-        x = x.view(-1,96*4*6)
+        x = x.view(-1,96*4*8)
         out = self.fc(x)
         return out
 
@@ -112,103 +113,13 @@ class Block(nn.Module):
 
         
         
-class NTU_Fi_ResNet(nn.Module):
+class LY_WARP_ResNet(nn.Module):
     def __init__(self, ResBlock, layer_list, num_classes):
-        super(NTU_Fi_ResNet, self).__init__()
+        super(LY_WARP_ResNet, self).__init__()
         self.reshape = nn.Sequential(
             nn.Conv2d(3,3,(15,23),stride=(3,9)),
             nn.ReLU(),
             nn.Conv2d(3,3,kernel_size=(3,23),stride=1),
-            nn.ReLU()
-        )
-        self.in_channels = 64
-        
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
-        self.batch_norm1 = nn.BatchNorm2d(64)
-        self.relu = nn.ReLU()
-        self.max_pool = nn.MaxPool2d(kernel_size = 3, stride=2, padding=1)
-        
-        self.layer1 = self._make_layer(ResBlock, layer_list[0], planes=64)
-        self.layer2 = self._make_layer(ResBlock, layer_list[1], planes=128, stride=2)
-        self.layer3 = self._make_layer(ResBlock, layer_list[2], planes=256, stride=2)
-        self.layer4 = self._make_layer(ResBlock, layer_list[3], planes=512, stride=2)
-        
-        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
-        self.fc = nn.Linear(512*ResBlock.expansion, num_classes)
-        
-    def forward(self, x):
-        x = self.reshape(x)
-        x = self.relu(self.batch_norm1(self.conv1(x)))
-        x = self.max_pool(x)
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
-        x = self.avgpool(x)
-        x = x.reshape(x.shape[0], -1)
-        x = self.fc(x)
-        
-        return x
-        
-    def _make_layer(self, ResBlock, blocks, planes, stride=1):
-        ii_downsample = None
-        layers = []
-        
-        if stride != 1 or self.in_channels != planes*ResBlock.expansion:
-            ii_downsample = nn.Sequential(
-                nn.Conv2d(self.in_channels, planes*ResBlock.expansion, kernel_size=1, stride=stride),
-                nn.BatchNorm2d(planes*ResBlock.expansion)
-            )
-            
-        layers.append(ResBlock(self.in_channels, planes, i_downsample=ii_downsample, stride=stride))
-        self.in_channels = planes*ResBlock.expansion
-        
-        for i in range(blocks-1):
-            layers.append(ResBlock(self.in_channels, planes))
-            
-        return nn.Sequential(*layers)
-    
-def NTU_Fi_ResNet18(num_classes):
-    return NTU_Fi_ResNet(Block, [2,2,2,2], num_classes = num_classes)
-def NTU_Fi_ResNet50(num_classes):
-    return NTU_Fi_ResNet(Bottleneck, [3,4,6,3], num_classes = num_classes)
-    
-def NTU_Fi_ResNet101(num_classes):
-    return NTU_Fi_ResNet(Bottleneck, [3,4,23,3], num_classes = num_classes)
-
-
-class LY_WARP_LeNet(nn.Module):
-    def __init__(self, num_classes):
-        super(LY_WARP_LeNet,self).__init__()
-        self.encoder = nn.Sequential(
-            nn.Conv2d(1,32,(3,69),stride=(1,9)),
-            nn.ReLU(True),
-            nn.MaxPool2d((1, 2)),
-            nn.Conv2d(32,64,3,stride=(1,3)),
-            nn.ReLU(True),
-            nn.MaxPool2d((2, 2)),
-            nn.Conv2d(64,96,(7,3),stride=(1,3)),
-            nn.ReLU(True),
-        )
-        self.fc = nn.Sequential(
-            nn.Linear(96*4*8,128),
-            nn.ReLU(),
-            nn.Linear(128,num_classes)
-        )
-    def forward(self,x):
-        x = self.encoder(x)
-        x = x.view(-1,96*4*8)
-        out = self.fc(x)
-        return out
-
-
-class LY_WARP_ResNet(nn.Module):
-    def __init__(self, ResBlock, layer_list, num_classes):
-        super(Ly_Warp_ResNet, self).__init__()
-        self.reshape = nn.Sequential(
-            nn.Conv2d(1,3,kernel_size=(3, 3), stride=(1, 3), padding=(1, 1)),
-            nn.ReLU(),
-            nn.Conv2d(3,3,kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)),
             nn.ReLU()
         )
         self.in_channels = 64
@@ -267,12 +178,77 @@ def LY_WARP_ResNet101(num_classes):
     return LY_WARP_ResNet(Bottleneck, [3,4,23,3], num_classes = num_classes)
 
 
+class Ly_Warp_ResNet(nn.Module):
+    def __init__(self, ResBlock, layer_list, num_classes):
+        super(Ly_Warp_ResNet, self).__init__()
+        self.reshape = nn.Sequential(
+            nn.Conv2d(1,3,(15,23),stride=(3,9)),
+            nn.ReLU(),
+            nn.Conv2d(3,3,kernel_size=(3,23),stride=1),
+            nn.ReLU()
+        )
+        self.in_channels = 64
+        
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.batch_norm1 = nn.BatchNorm2d(64)
+        self.relu = nn.ReLU()
+        self.max_pool = nn.MaxPool2d(kernel_size = 3, stride=2, padding=1)
+        
+        self.layer1 = self._make_layer(ResBlock, layer_list[0], planes=64)
+        self.layer2 = self._make_layer(ResBlock, layer_list[1], planes=128, stride=2)
+        self.layer3 = self._make_layer(ResBlock, layer_list[2], planes=256, stride=2)
+        self.layer4 = self._make_layer(ResBlock, layer_list[3], planes=512, stride=2)
+        
+        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
+        self.fc = nn.Linear(512*ResBlock.expansion, num_classes)
+        
+    def forward(self, x):
+        x = self.reshape(x)
+        x = self.relu(self.batch_norm1(self.conv1(x)))
+        x = self.max_pool(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.avgpool(x)
+        x = x.reshape(x.shape[0], -1)
+        x = self.fc(x)
+        
+        return x
+        
+    def _make_layer(self, ResBlock, blocks, planes, stride=1):
+        ii_downsample = None
+        layers = []
+        
+        if stride != 1 or self.in_channels != planes*ResBlock.expansion:
+            ii_downsample = nn.Sequential(
+                nn.Conv2d(self.in_channels, planes*ResBlock.expansion, kernel_size=1, stride=stride),
+                nn.BatchNorm2d(planes*ResBlock.expansion)
+            )
+            
+        layers.append(ResBlock(self.in_channels, planes, i_downsample=ii_downsample, stride=stride))
+        self.in_channels = planes*ResBlock.expansion
+        
+        for i in range(blocks-1):
+            layers.append(ResBlock(self.in_channels, planes))
+            
+        return nn.Sequential(*layers)
+    
+def Ly_Warp_ResNet18(num_classes):
+    return Ly_Warp_ResNet(Block, [2,2,2,2], num_classes = num_classes)
+def Ly_Warp_ResNet50(num_classes):
+    return Ly_Warp_ResNet(Bottleneck, [3,4,6,3], num_classes = num_classes)
+    
+def Ly_Warp_ResNet101(num_classes):
+    return Ly_Warp_ResNet(Bottleneck, [3,4,23,3], num_classes = num_classes)
 
 
 
-class NTU_Fi_RNN(nn.Module):
+
+
+class LY_WARP_RNN(nn.Module):
     def __init__(self,num_classes):
-        super(NTU_Fi_RNN,self).__init__()
+        super(LY_WARP_RNN,self).__init__()
         self.rnn = nn.RNN(342,64,num_layers=1)
         self.fc = nn.Linear(64,num_classes)
     def forward(self,x):
@@ -283,9 +259,9 @@ class NTU_Fi_RNN(nn.Module):
         return outputs
 
 
-class NTU_Fi_GRU(nn.Module):
+class LY_WARP_GRU(nn.Module):
     def __init__(self,num_classes):
-        super(NTU_Fi_GRU,self).__init__()
+        super(LY_WARP_GRU,self).__init__()
         self.gru = nn.GRU(342,64,num_layers=1)
         self.fc = nn.Linear(64,num_classes)
     def forward(self,x):
@@ -296,9 +272,9 @@ class NTU_Fi_GRU(nn.Module):
         return outputs
     
     
-class NTU_Fi_LSTM(nn.Module):
+class LY_WARP_LSTM(nn.Module):
     def __init__(self,num_classes):
-        super(NTU_Fi_LSTM,self).__init__()
+        super(LY_WARP_LSTM,self).__init__()
         self.lstm = nn.LSTM(342,64,num_layers=1)
         self.fc = nn.Linear(64,num_classes)
     def forward(self,x):
@@ -309,9 +285,9 @@ class NTU_Fi_LSTM(nn.Module):
         return outputs
 
 
-class NTU_Fi_BiLSTM(nn.Module):
+class LY_WARP_BiLSTM(nn.Module):
     def __init__(self,num_classes):
-        super(NTU_Fi_BiLSTM,self).__init__()
+        super(LY_WARP_BiLSTM,self).__init__()
         self.lstm = nn.LSTM(342,64,num_layers=1,bidirectional=True)
         self.fc = nn.Linear(64,num_classes)
     def forward(self,x):
@@ -322,9 +298,9 @@ class NTU_Fi_BiLSTM(nn.Module):
         return outputs
 
 
-class NTU_Fi_CNN_GRU(nn.Module):
+class LY_WARP_CNN_GRU(nn.Module):
     def __init__(self,num_classes):
-        super(NTU_Fi_CNN_GRU,self).__init__()
+        super(LY_WARP_CNN_GRU,self).__init__()
         self.encoder = nn.Sequential(
             nn.Conv1d(1,16,12,6),
             nn.ReLU(),
@@ -459,7 +435,7 @@ class ClassificationHead(nn.Sequential):
             nn.LayerNorm(emb_size), 
             nn.Linear(emb_size, num_classes))
         
-class NTU_Fi_ViT(nn.Sequential):
+class LY_WARP_ViT(nn.Sequential):
     def __init__(self,     
                 in_channels = 1,
                 patch_size_w = 9,
@@ -476,9 +452,9 @@ class NTU_Fi_ViT(nn.Sequential):
             ClassificationHead(emb_size, num_classes)
         )
 
-class NTU_Fi_MLP(nn.Module):
+class LY_WARP_MLP(nn.Module):
     def __init__(self, num_classes):
-        super(NTU_Fi_MLP,self).__init__()
+        super(LY_WARP_MLP,self).__init__()
         self.fc = nn.Sequential(
             nn.Linear(3*114*500,1024),
             nn.ReLU(),

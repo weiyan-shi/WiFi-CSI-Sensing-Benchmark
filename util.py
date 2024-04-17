@@ -63,16 +63,16 @@ def load_data_n_model(dataset_name, model_name, root):
     elif dataset_name == 'Ly-Gesture-20240327':
         print('using dataset: Ly-Gesture-20240327')
         num_classes = classes['Ly-Gesture-20240327']
-        train_loader = torch.utils.data.DataLoader(dataset=Ly_CSI_Dataset(root + 'Ly-Gesture-20240327\\test_amp\\'), batch_size=64, shuffle=True)
-        test_loader = torch.utils.data.DataLoader(dataset=Ly_CSI_Dataset(root + 'Ly-Gesture-20240327\\train_amp\\'), batch_size=64, shuffle=False)
+        train_loader = torch.utils.data.DataLoader(dataset=Ly_CSI_Dataset(root + 'Ly-Gesture-20240327\\test_amp\\'), batch_size=32, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(dataset=Ly_CSI_Dataset(root + 'Ly-Gesture-20240327\\train_amp\\'), batch_size=32, shuffle=False)
         if model_name == 'MLP':
             print("using model: MLP")
             model = NTU_Fi_MLP(num_classes)
             train_epoch = 50 #15
         elif model_name == 'LeNet':
             print("using model: LeNet")
-            model = NTU_Fi_LeNet(num_classes)
-            train_epoch = 50 #20
+            model = LY_WARP_LeNet(num_classes)
+            train_epoch = 100 #20
         elif model_name == 'ResNet18':
             print("using model: ResNet18")
             model = Ly_Warp_ResNet18(num_classes)

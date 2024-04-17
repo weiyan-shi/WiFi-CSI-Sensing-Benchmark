@@ -54,7 +54,7 @@ class Ly_CSI_Dataset(Dataset):
         x = sio.loadmat(sample_dir)[self.modal]
         
         # normalize
-        x = (x - 42.3199)/4.9802
+        x = (x - 2.2669530843743995)/1.5466574000311926
         
         # sampling: 6000 -> 1500
         x = x[:,::4]

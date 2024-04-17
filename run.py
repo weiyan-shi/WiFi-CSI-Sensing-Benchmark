@@ -68,7 +68,8 @@ def main():
     print(args)
 
     dataset = 'Ly-Gesture-20240327'
-    model = 'ResNet18'
+    model = 'LeNet'
+  
 
     train_loader, test_loader, model, train_epoch = load_data_n_model(dataset, model, root)
     criterion = nn.CrossEntropyLoss()
